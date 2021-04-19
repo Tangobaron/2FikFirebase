@@ -9,14 +9,22 @@ firebase_admin.initialize_app(cred)
 db = firestore.client()
 
 
+def profile_names(uid):
+    names_ref = db.collection(u'profiles').get()
+    for i in names_ref:
+        names = i.get('name')
+        if uid == i.id:
+            return names
+
+
 def on_snapshot(doc_snapshot, changes, read_time):
     print(
         '_____________________________________________________________________________________________________________')
 
     for doc in doc_snapshot:
         messages = doc.to_dict()
-        sender = messages.get('from')
-        recipient = messages.get('to')
+        sender = profile_names(messages.get('from'))
+        recipient = profile_names(messages.get('to'))
         time_of_reception = messages.get('time')
         text = messages.get('body')
 
@@ -29,7 +37,7 @@ def on_snapshot(doc_snapshot, changes, read_time):
 
 
 # Creates a reference to the messages collection
-doc_ref = db.collection('messages').order_by('time', direction=firestore.Query.DESCENDING).limit(3)
+doc_ref = db.collection('messages').order_by('time', direction=firestore.Query.DESCENDING).limit(10)
 doc_watch = doc_ref.on_snapshot(on_snapshot)
 
 # Keep the app running
