@@ -1,6 +1,17 @@
+# Extract the names of the profiles according to their UIDs
+def profile_names():
+    names_ref = db.collection(u'profiles').get()
+    for i in names_ref:
+        names = i.get('name')
+        uid = i.id
+        print(f'{uid} ->  {names}')
 
-db = firestore.client()
 
-# Creates a reference to the collection profiles to fetch users names
-names_ref = db.collection('profiles').order_by('time', direction=firestore.Query.DESCENDING).limit(3)
-user_name = names_ref.get('name')
+# Extract the names of the 2Fik profiles according to their UIDs
+def profile_names():
+    names_ref = db.collection(u'profiles').get()
+    for i in names_ref:
+        if i.get('state') == '2fik':
+            names = i.get('name')
+            uid = i.id
+            print(f'{uid} ->  {names}')
