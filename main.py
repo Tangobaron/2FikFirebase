@@ -6,7 +6,7 @@ import time
 import socket
 import sys
 
-cred = credentials.Certificate("securityAccountKey.json")
+cred = credentials.Certificate("venv/securityAccountKey.json")
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 
@@ -17,7 +17,8 @@ def main():
     global isAlive
     if isAlive is False:
         # Creates a reference to the messages collection
-        doc_ref = db.collection('messages').order_by('time', direction=firestore.Query.DESCENDING).limit(5)
+        #doc_ref = db.collection('messages').order_by('time', direction=firestore.Query.DESCENDING).limit(5)
+		doc_ref = db.collection('messages').order_by('time', direction=firestore.Query.DESCENDING).limit(5)
         doc_watch = doc_ref.on_snapshot(on_snapshot)
         isAlive = True
 
@@ -74,6 +75,7 @@ def on_snapshot(doc_snapshot, changes, read_time):
 
     for doc in doc_snapshot:
         messages = doc.to_dict()
+        print(f'messages: {messages}')
         sender = get_real_name(messages.get('from'))
         recipient = twofik_location()
         print(f'recipient: {recipient}')
