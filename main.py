@@ -18,7 +18,7 @@ def main():
     if isAlive is False:
         # Creates a reference to the messages collection
         #doc_ref = db.collection('messages').order_by('time', direction=firestore.Query.DESCENDING).limit(5)
-		doc_ref = db.collection('messages').order_by('time', direction=firestore.Query.DESCENDING).limit(5)
+        doc_ref = db.collection('messages').order_by('time', direction=firestore.Query.DESCENDING).limit(5)
         doc_watch = doc_ref.on_snapshot(on_snapshot)
         isAlive = True
 
