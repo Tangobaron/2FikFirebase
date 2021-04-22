@@ -9,22 +9,72 @@ firebase_admin.initialize_app(cred)
 db = firestore.client()
 
 
-def profile_names(uid):
+# Extract the names of the profiles according to their UIDs
+def users_profile_names():
     names_ref = db.collection(u'profiles').get()
     for i in names_ref:
-        names = i.get('name')
-        if uid == i.id:
-            return names
+        if i.get('state') != '2fik':
+            names = i.get('name')
+            uid = i.id
+            print(f'{uid} ->  {names}')
 
 
+# Extract the names of the 2Fik profiles according to their UIDs
+def twofik_profile_names():
+    names_ref = db.collection(u'profiles').get()
+    for i in names_ref:
+        if i.get('state') == '2fik':
+            names = i.get('name')
+            uid = i.id
+            print(f'{uid} ->  {names}')
+
+
+# Gets a single real name from a UID
+def get_real_name(uid):
+    names_ref = db.collection(u'profiles').get()
+    for name in names_ref:
+        if uid == name.id:
+            return name.get('name')
+
+
+# Where is 2Fik in the app and which profile is he using
+def twofik_location():
+    # super user to track (in this case Raph for now)
+    identification = 'pX94rzzZRTOfluPkLuRZZKkUmFY2'
+
+    # firebase database reference
+    location_ref = db.collection(u'location').document(identification).get()
+    dictionary = location_ref.to_dict()
+
+    # get 2Fik's current profile used
+    profile_selected = location_ref.get('profile')
+
+    # Which body is 2Fik in
+    body = dictionary['body']
+    body_state = body.get('state')
+
+    # Which panel is 2Fik on
+    panel = dictionary['panel']
+    panel_state = panel.get('state')
+
+    return get_real_name(profile_selected)
+
+    print('______________________________________________________________________________')
+    print(f'profile used : {profile_selected}')
+    print(body_state)
+    print(panel_state)
+    print('______________________________________________________________________________')
+
+
+# Receives each messages depending on which persona is 2Fik incarning
 def on_snapshot(doc_snapshot, changes, read_time):
     print(
         '_____________________________________________________________________________________________________________')
 
     for doc in doc_snapshot:
         messages = doc.to_dict()
-        sender = profile_names(messages.get('from'))
-        recipient = profile_names(messages.get('to'))
+        sender = get_real_name(messages.get('from'))
+        recipient = twofik_location()
         time_of_reception = messages.get('time')
         text = messages.get('body')
 
