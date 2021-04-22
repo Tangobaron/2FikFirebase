@@ -11,18 +11,31 @@ firebase_admin.initialize_app(cred)
 db = firestore.client()
 
 #server related variable
-TD_CLI = TDClient('localhost', 5786) 
+TD_CLI = TDClient('localhost', 5786)
 isAlive = False
+
 def main():
     global isAlive
     if isAlive is False:
         # Creates a reference to the messages collection
         #doc_ref = db.collection('messages').order_by('time', direction=firestore.Query.DESCENDING).limit(5)
-        doc_ref = db.collection('messages').order_by('time', direction=firestore.Query.DESCENDING).limit(5)
-        doc_watch = doc_ref.on_snapshot(on_snapshot)
+        twoFikProfile = twofik_location()
+        twoFikID = twofik_location(True)
+        collection_ref = db.collection('messages')
+        print(f'collection: {collection_ref}')
+        fik_ref = collection_ref.where(u'from', u'==',  twoFikID)
+        #fik_to = collection_ref.where(u'to', u'==',  twoFikID)
+        #fik_from = collection_ref.where(u'from', u'==',  twoFikID)
+        #doc_ref = fik_ref.order_by('time', direction=firestore.Query.DESCENDING).limit(5)
+        print(f'profile:{twoFikProfile}')
+        print(f'profile id:{twoFikID}')
+        #doc_ref = fik_ref.order_by('time', direction=firestore.Query.DESCENDING).limit(5)
+        #.Where(u'to',u'==',u'{2fikProfile}')
+        doc_watch = fik_ref.on_snapshot(on_snapshot)
         isAlive = True
 
 # Extract the names of the 2Fik profiles according to their UIDs
+
 def twofik_profile_names():
     names_ref = db.collection(u'profiles').get()
     for i in names_ref:
@@ -41,7 +54,7 @@ def get_real_name(uid):
 
 
 # Where is 2Fik in the app and which profile is he using
-def twofik_location():
+def twofik_location(getID = False):
     # super user to track (in this case Raph for now)
     identification = 'pX94rzzZRTOfluPkLuRZZKkUmFY2'
 
@@ -59,14 +72,15 @@ def twofik_location():
     # Which panel is 2Fik on
     panel = dictionary['panel']
     panel_state = panel.get('state')
-
-    return get_real_name(profile_selected)
-
     print('______________________________________________________________________________')
     print(f'profile used : {profile_selected}')
     print(body_state)
     print(panel_state)
     print('______________________________________________________________________________')
+    if getID == True:
+        return profile_selected
+    else:
+        return get_real_name(profile_selected)
 
 
 # Receives each messages depending on which persona is 2Fik incarning
@@ -77,7 +91,7 @@ def on_snapshot(doc_snapshot, changes, read_time):
         messages = doc.to_dict()
         print(f'messages: {messages}')
         sender = get_real_name(messages.get('from'))
-        recipient = twofik_location()
+        recipient = get_real_name(messages.get('to'))
         print(f'recipient: {recipient}')
         time_of_reception = messages.get('time')
         text = messages.get('body')
@@ -93,8 +107,11 @@ def on_snapshot(doc_snapshot, changes, read_time):
 # Keep the app running
 try:
 	main()
-except err:
-	print(err)
+except KeyboardInterrupt:
+        print('interrupted')
+        pass
+#except Exception as e:
+	#print(f'an error occured in main function: {repr(e)}')
 
 while True:
     time.sleep(0.1)
