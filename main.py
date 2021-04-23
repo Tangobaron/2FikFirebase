@@ -2,6 +2,7 @@ import firebase_admin
 
 from firebase_admin import credentials, firestore
 from td_client import TDClient
+from twofik_localisation import Twofik
 import time
 import socket
 import sys
@@ -14,6 +15,7 @@ db = firestore.client()
 TD_CLI = TDClient('localhost', 5786)
 isAlive = False
 initMessage = False
+twoFik = Twofik(cred,db,'uTS21weWNkbggwHu16ScM1Nqart1')
 
 def main():
     global isAlive
@@ -94,11 +96,22 @@ def on_snapshot(doc_snapshot, changes, read_time):
     
     if initMessage is True:
         for change in changes:
+            print(f'changeType: {change.type.name}')
             if change.type.name == 'ADDED':
-                doc = change.document.id
+                #doc = change.document.id
+                doc = change.document.to_dict()
                 print('_____________________________________________________________________________________________________________')
                 print(f'doc: {doc}')
                 print('_____________________________________________________________________________________________________________')
+                sender = get_real_name(messages.get('from'))
+                recipient = get_real_name(messages.get('to'))
+                print(f'recipient: {recipient}')
+                time_of_reception = messages.get('time')
+                text = messages.get('body')
+                nameList = ["sender", "recipient", "time", "text"]
+                dataList = [str(sender), str(recipient), str(time_of_reception), str(text)]
+                TD_CLI.SendMessage(nameList, dataList)
+
     else:
         for doc in doc_snapshot:
             messages = doc.to_dict()
