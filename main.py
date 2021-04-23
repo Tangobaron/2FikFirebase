@@ -13,6 +13,7 @@ db = firestore.client()
 #server related variable
 TD_CLI = TDClient('localhost', 5786)
 isAlive = False
+initMessage = False
 
 def main():
     global isAlive
@@ -23,19 +24,21 @@ def main():
         twoFikID = twofik_location(True)
         collection_ref = db.collection('messages')
         print(f'collection: {collection_ref}')
-        fik_ref = collection_ref.where(u'from', u'==',  twoFikID)
+        fik_ref = collection_ref.where(u'from', u'==',  twoFikID).limit(10)
         #fik_to = collection_ref.where(u'to', u'==',  twoFikID)
         #fik_from = collection_ref.where(u'from', u'==',  twoFikID)
         #doc_ref = fik_ref.order_by('time', direction=firestore.Query.DESCENDING).limit(5)
         print(f'profile:{twoFikProfile}')
         print(f'profile id:{twoFikID}')
-        #doc_ref = fik_ref.order_by('time', direction=firestore.Query.DESCENDING).limit(5)
+        #check if we can snapshot on the fik_ref and use the doc_ref for sending data in order list
         #.Where(u'to',u'==',u'{2fikProfile}')
         doc_watch = fik_ref.on_snapshot(on_snapshot)
         isAlive = True
 
-# Extract the names of the 2Fik profiles according to their UIDs
+# Follow 2fik location in real time
 
+
+# Extract the names of the 2Fik profiles according to their UIDs
 def twofik_profile_names():
     names_ref = db.collection(u'profiles').get()
     for i in names_ref:
@@ -56,7 +59,8 @@ def get_real_name(uid):
 # Where is 2Fik in the app and which profile is he using
 def twofik_location(getID = False):
     # super user to track (in this case Raph for now)
-    identification = 'pX94rzzZRTOfluPkLuRZZKkUmFY2'
+    #identification = 'pX94rzzZRTOfluPkLuRZZKkUmFY2'
+    identification = 'uTS21weWNkbggwHu16ScM1Nqart1'
 
     # firebase database reference
     location_ref = db.collection(u'location').document(identification).get()
@@ -85,25 +89,42 @@ def twofik_location(getID = False):
 
 # Receives each messages depending on which persona is 2Fik incarning
 def on_snapshot(doc_snapshot, changes, read_time):
+    global initMessage
     print('_____________________________________________________________________________________________________________')
+    
+    if initMessage is True:
+        for change in changes:
+            if change.type.name == 'ADDED':
+                doc = change.document.id
+                print('_____________________________________________________________________________________________________________')
+                print(f'doc: {doc}')
+                print('_____________________________________________________________________________________________________________')
+    else:
+        for doc in doc_snapshot:
+            messages = doc.to_dict()
+            print(f'messages: {messages}')
+            sender = get_real_name(messages.get('from'))
+            recipient = get_real_name(messages.get('to'))
+            print(f'recipient: {recipient}')
+            time_of_reception = messages.get('time')
+            text = messages.get('body')
+            nameList = ["sender", "recipient", "time", "text"]
+            dataList = [str(sender), str(recipient), str(time_of_reception), str(text)]
+            TD_CLI.SendMessage(nameList, dataList)
+            #print(f"sender:     {sender}")
+            #print(f"recipient:  {recipient}")
+            #print(f"time:       {time_of_reception}")
+            #print(f"text:       {text}")
+            print('_____________________________________________________________________________________________________________')
+        initMessage = True
 
-    for doc in doc_snapshot:
-        messages = doc.to_dict()
-        print(f'messages: {messages}')
-        sender = get_real_name(messages.get('from'))
-        recipient = get_real_name(messages.get('to'))
-        print(f'recipient: {recipient}')
-        time_of_reception = messages.get('time')
-        text = messages.get('body')
-        nameList = ["sender", "recipient", "time", "text"]
-        dataList = [str(sender), str(recipient), str(time_of_reception), str(text)]
-        TD_CLI.SendMessage(nameList, dataList)
-        #print(f"sender:     {sender}")
-        #print(f"recipient:  {recipient}")
-        #print(f"time:       {time_of_reception}")
-        #print(f"text:       {text}")
-        print('_____________________________________________________________________________________________________________')
-
+def on_change(doc_snapshot, changes, read_time):
+    for change in changes:
+        if change.type.name == 'ADDED':
+            doc = change.document
+            print('_____________________________________________________________________________________________________________')
+            print(f'doc: {doc}')
+            print('_____________________________________________________________________________________________________________')
 # Keep the app running
 try:
 	main()
