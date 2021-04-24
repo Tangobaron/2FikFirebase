@@ -130,14 +130,6 @@ def on_snapshot(doc_snapshot, changes, read_time):
             #print(f"text:       {text}")
             print('_____________________________________________________________________________________________________________')
         initMessage = True
-
-def on_change(doc_snapshot, changes, read_time):
-    for change in changes:
-        if change.type.name == 'ADDED':
-            doc = change.document
-            print('_____________________________________________________________________________________________________________')
-            print(f'doc: {doc}')
-            print('_____________________________________________________________________________________________________________')
 # Keep the app running
 try:
 	main()
