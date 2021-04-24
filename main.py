@@ -22,23 +22,22 @@ def main():
     if isAlive is False:
         # Creates a reference to the messages collection
         #doc_ref = db.collection('messages').order_by('time', direction=firestore.Query.DESCENDING).limit(5)
-        twoFikProfile = twofik_location()
-        twoFikID = twofik_location(True)
-        collection_ref = db.collection('messages')
-        print(f'collection: {collection_ref}')
-        fik_ref = collection_ref.where(u'from', u'==',  twoFikID).limit(10)
-        #fik_to = collection_ref.where(u'to', u'==',  twoFikID)
-        #fik_from = collection_ref.where(u'from', u'==',  twoFikID)
-        #doc_ref = fik_ref.order_by('time', direction=firestore.Query.DESCENDING).limit(5)
-        print(f'profile:{twoFikProfile}')
-        print(f'profile id:{twoFikID}')
-        #check if we can snapshot on the fik_ref and use the doc_ref for sending data in order list
-        #.Where(u'to',u'==',u'{2fikProfile}')
-        doc_watch = fik_ref.on_snapshot(on_snapshot)
-        isAlive = True
+        isAlive = init()
 
 # Follow 2fik location in real time
 
+def init():
+    global twoFik
+    twoFikID = twofik_location(True)
+    # start listener on message collection
+    collection_ref = db.collection('messages')
+    print(f'collection: {collection_ref}')
+    fik_ref = collection_ref.where(u'from', u'==',  twoFikID).limit(10) 
+    doc_watch = fik_ref.on_snapshot(on_snapshot)
+    # create twoFik status object and start listening on it<s in app location
+    twoFik.Follow2fik()
+
+    return True
 
 # Extract the names of the 2Fik profiles according to their UIDs
 def twofik_profile_names():
