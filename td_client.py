@@ -29,13 +29,6 @@ class TDClient:
 
 	def SendMessage(self, name, data):
 		message = str.encode(self.composeMessage(name,data))
-		print(message)
+		#print(message)
 		self.sock.sendall(message)
-
-		#amount_received = 0
-		#amount_expected = len(message)
-    
-		#while amount_received < amount_expected:
-		#	data = self.sock.recv(16)
-		#	amount_received += len(data)
-		print(f'message sent {message} at server: {self.ip}:{self.port}')
+		#print(f'message sent {message} at server: {self.ip}:{self.port}')
