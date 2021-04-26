@@ -1,9 +1,8 @@
 from main import db
 
 
-class Ranking:
-    def __init__(self, name, uid):
-        self.name = name
+class ProfileSorter:
+    def __init__(self, uid):
         self.uid = uid
 
     # Returns the entire list of user profiles
