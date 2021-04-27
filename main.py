@@ -42,17 +42,25 @@ def init():
     watch(serverVar.twoFik.ChatWith,callback=ChangeQuery)
     return True
 
+    def iniInbox():
+        Inbox.init(twoKif.Name)
+
 def queryChat():
+    print('Entering queryChat')
     collection_ref = db.collection('messages')
     fik_ref = collection_ref.where(u'from', u'==',  serverVar.twoFik.Name).limit(30)
-    if serverVar.twoFik.ChatWith:
-        profile_ref = fik_ref.where(u'to', u'==', serverVar.twoFik.ChatWith)
+    profile_ref = fik_ref.where(u'to', u'==', serverVar.twoFik.ChatWith)
+    if serverVar.doc_watch:
+        print("remove listener")
+        serverVar.doc_watch.remove()
+    try:
         serverVar.doc_watch = profile_ref.on_snapshot(on_snapshot)
+    except:
+        print('cannot create snapshot object')
+    print('finished with queryChat')
 
 def ChangeQuery(frame, elem, exec_info):
     print("change query but fonction is not finish")
-    if serverVar.doc_watch:
-        serverVar.doc_watch.unsubscribe()
     queryChat()
 
 # Extract the names of the 2Fik profiles according to their UIDs
@@ -114,9 +122,9 @@ def on_snapshot(doc_snapshot, changes, read_time):
             if change.type.name == 'ADDED':
                 #doc = change.document.id
                 doc = change.document.to_dict()
-                #print('_____________________________________________________________________________________________________________')
-                #print(f'doc: {doc}')
-                #print('_____________________________________________________________________________________________________________')
+                print('_____________________________________________________________________________________________________________')
+                print(f'doc: {doc}')
+                print('_____________________________________________________________________________________________________________')
                 sender = get_real_name(messages.get('from'))
                 recipient = get_real_name(messages.get('to'))
                 #print(f'recipient: {recipient}')

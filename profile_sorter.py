@@ -1,6 +1,5 @@
 from main import db
 
-
 class Ranking:
     def __init__(self, name, uid):
         self.name = name
