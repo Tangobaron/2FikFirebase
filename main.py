@@ -1,59 +1,63 @@
+import time
+
 import firebase_admin
-from watchpoints import watch
 from firebase_admin import credentials, firestore
+from watchpoints import watch
+
 from td_client import TDClient
 from twofik_localisation import Twofik
-import time
-import socket
-import sys
 
 cred = credentials.Certificate("venv/securityAccountKey.json")
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 
-#server related variable
+
+# server related variable
 class serverVar():
     TD_CLI = TDClient('localhost', 5786)
     isAlive = False
     initMessage = False
-    twoFik = Twofik(cred,db,'uTS21weWNkbggwHu16ScM1Nqart1')
+    twoFik = Twofik(cred, db, 'uTS21weWNkbggwHu16ScM1Nqart1')
     doc_watch = None
 
 
 def main():
     if serverVar.isAlive is False:
         # Creates a reference to the messages collection
-        #doc_ref = db.collection('messages').order_by('time', direction=firestore.Query.DESCENDING).limit(5)
+        # doc_ref = db.collection('messages').order_by('time', direction=firestore.Query.DESCENDING).limit(5)
         serverVar.isAlive = init()
+
 
 # Follow 2fik location in real time
 
 def init():
-
-    #twoFikID = twofik_location(True)
+    # twoFikID = twofik_location(True)
     # start listener on message collection
-    #collection_ref = db.collection('messages')
-    #fik_ref = collection_ref.where(u'from', u'==',  twoFikID).limit(10) 
+    # collection_ref = db.collection('messages')
+    # fik_ref = collection_ref.where(u'from', u'==',  twoFikID).limit(10)
     queryChat()
-    #serverVar.doc_watch = fik_ref.on_snapshot(on_snapshot)
+    # serverVar.doc_watch = fik_ref.on_snapshot(on_snapshot)
     # create twoFik status object and start listening on it<s in app location
     serverVar.twoFik.Follow2fik()
-    #watch(twoFik.Name,callback=ChangeQuery)
-    watch(serverVar.twoFik.ChatWith,callback=ChangeQuery)
+    # watch(twoFik.Name,callback=ChangeQuery)
+    watch(serverVar.twoFik.ChatWith, callback=ChangeQuery)
     return True
+
 
 def queryChat():
     collection_ref = db.collection('messages')
-    fik_ref = collection_ref.where(u'from', u'==',  serverVar.twoFik.Name).limit(30)
+    fik_ref = collection_ref.where(u'from', u'==', serverVar.twoFik.Name).limit(30)
     if serverVar.twoFik.ChatWith:
         profile_ref = fik_ref.where(u'to', u'==', serverVar.twoFik.ChatWith)
         serverVar.doc_watch = profile_ref.on_snapshot(on_snapshot)
+
 
 def ChangeQuery(frame, elem, exec_info):
     print("change query but fonction is not finish")
     if serverVar.doc_watch:
         serverVar.doc_watch.unsubscribe()
     queryChat()
+
 
 # Extract the names of the 2Fik profiles according to their UIDs
 def twofik_profile_names():
@@ -74,9 +78,9 @@ def get_real_name(uid):
 
 
 # Where is 2Fik in the app and which profile is he using
-def twofik_location(getID = False):
+def twofik_location(getID=False):
     # super user to track (in this case Raph for now)
-    #identification = 'pX94rzzZRTOfluPkLuRZZKkUmFY2'
+    # identification = 'pX94rzzZRTOfluPkLuRZZKkUmFY2'
     identification = 'uTS21weWNkbggwHu16ScM1Nqart1'
 
     # firebase database reference
@@ -106,20 +110,20 @@ def twofik_location(getID = False):
 
 # Receives each messages depending on which persona is 2Fik incarning
 def on_snapshot(doc_snapshot, changes, read_time):
-    #print('_____________________________________________________________________________________________________________')
-    
+    # print('_____________________________________________________________________________________________________________')
+
     if serverVar.initMessage is True:
         for change in changes:
             print(f'changeType: {change.type.name}')
             if change.type.name == 'ADDED':
-                #doc = change.document.id
+                # doc = change.document.id
                 doc = change.document.to_dict()
-                #print('_____________________________________________________________________________________________________________')
-                #print(f'doc: {doc}')
-                #print('_____________________________________________________________________________________________________________')
+                # print('_____________________________________________________________________________________________________________')
+                # print(f'doc: {doc}')
+                # print('_____________________________________________________________________________________________________________')
                 sender = get_real_name(messages.get('from'))
                 recipient = get_real_name(messages.get('to'))
-                #print(f'recipient: {recipient}')
+                # print(f'recipient: {recipient}')
                 time_of_reception = messages.get('time')
                 text = messages.get('body')
                 nameList = ["sender", "recipient", "time", "text"]
@@ -129,34 +133,36 @@ def on_snapshot(doc_snapshot, changes, read_time):
     else:
         for doc in doc_snapshot:
             messages = doc.to_dict()
-            #print(f'messages: {messages}')
+            # print(f'messages: {messages}')
             sender = get_real_name(messages.get('from'))
             recipient = get_real_name(messages.get('to'))
-            #print(f'recipient: {recipient}')
+            # print(f'recipient: {recipient}')
             time_of_reception = messages.get('time')
             text = messages.get('body')
             nameList = ["sender", "recipient", "time", "text"]
             dataList = [str(sender), str(recipient), str(time_of_reception), str(text)]
             serverVar.TD_CLI.SendMessage(nameList, dataList)
-            #print(f"sender:     {sender}")
-            #print(f"recipient:  {recipient}")
-            #print(f"time:       {time_of_reception}")
-            #print(f"text:       {text}")
-            #print('_____________________________________________________________________________________________________________')
+            # print(f"sender:     {sender}")
+            # print(f"recipient:  {recipient}")
+            # print(f"time:       {time_of_reception}")
+            # print(f"text:       {text}")
+            # print('_____________________________________________________________________________________________________________')
         initMessage = True
+
+
 # Keep the app running
 try:
-	main()
+    main()
 except KeyboardInterrupt:
-        print('interrupted')
-        pass
-#except Exception as e:
-	#print(f'an error occured in main function: {repr(e)}')
+    print('interrupted')
+    pass
+# except Exception as e:
+# print(f'an error occured in main function: {repr(e)}')
 
 while True:
     time.sleep(0.1)
 
-#if __name__=="__main__":
+# if __name__=="__main__":
 #    try:
 #        main()
 #    except KeyboardInterrupt:
