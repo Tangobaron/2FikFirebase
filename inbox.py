@@ -11,7 +11,7 @@ class Inbox:
         self.persons = {}
         self.maxIndex = 20
 
-    # fill inbox with latest messages
+    # fills inbox with latest messages
     def CalculateInbox(self, identification):
 
         # Fetch all the latest messages addressed to the 2fik profile is currently using
