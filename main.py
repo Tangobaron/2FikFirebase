@@ -3,6 +3,7 @@ from watchpoints import watch
 from firebase_admin import credentials, firestore
 from td_client import TDClient
 from twofik_localisation import Twofik
+from snapshot_class import Snapshot as Listener
 import time
 import socket
 import sys
@@ -16,14 +17,17 @@ sVar = None
 #server related variable
 class serverVar():
     testing = False
-    TD_CLI = TDClient('localhost', 5786)
+    queryLimit = 30
+    CLI_from = TDClient('localhost', 5786)
+    CLI_to = TDClient('localhost', 5788)
     isAlive = False
-    twoFik = Twofik(cred,db,'uTS21weWNkbggwHu16ScM1Nqart1')
+    twoFik = Twofik(cred,db,'uTS21weWNkbggwHu16ScM1Nqart1', DEBUG=False)
     doc_watch = None
-    terminateThread = False
     lastName = None
     initMessage = False
-    callbackDone = threading.Event()
+    FromListener = Listener(db, CLI_from, ACTION="Sent", DEBUG=False)
+    toListener = Listener(db, CLI_to, ACTION="Received", DEBUG=False)
+    #callbackDone = threading.Event()
 
 
 def main():
@@ -33,7 +37,6 @@ def main():
     if sVar.isAlive is False:
         if sVar.testing: print("Initialise server")
         # Creates a reference to the messages collection
-        #doc_ref = db.collection('messages').order_by('time', direction=firestore.Query.DESCENDING).limit(5)
         sVar.isAlive = init()
     if sVar.lastName != sVar.twoFik.ChatWith:
         if sVar.testing: print("----------------------| updating message query")
@@ -44,35 +47,21 @@ def main():
 
 def init():
     global sVar
-    #twoFikID = twofik_location(True)
-    # start listener on message collection
-    #collection_ref = db.collection('messages')
-    #fik_ref = collection_ref.where(u'from', u'==',  twoFikID).limit(10) 
-    #serverVar.doc_watch = fik_ref.on_snapshot(on_snapshot)
-    # create twoFik status object and start listening on it<s in app location
     sVar.twoFik.Follow2fik()
-    #watch(twoFik.Name,callback=ChangeQuery)
-    #watch(sVar.twoFik.Name,callback=ChangeQuery)
     return True
 
 def queryChat():
     global sVar
+
     collection_ref = db.collection('messages')
     if sVar.testing: print(f'twofik id: {sVar.twoFik.Name}')
-    fik_ref = collection_ref.where(u'from', u'==',  sVar.twoFik.Name).limit(30)
-    if sVar.testing: print(f'Twofik ID: {sVar.twoFik.Name}')
-    profile_ref = fik_ref.where(u'to', u'==', sVar.twoFik.ChatWith)
-    sVar.doc_watch = profile_ref.on_snapshot(on_snapshot)
-    if sVar.doc_watch is not None:
-        if sVar.testing: print("remove listener after the callback trigger")
-        sVar.terminateThread = True
-        sVar.callbackDone.wait(timeout=30)
-        sVar.doc_watch.unsubscribe()
-        sVar.initMessage = False
-    try:
-        sVar.doc_watch = profile_ref.on_snapshot(on_snapshot)
-    except:
-        if sVar.testing: print('cannot create snapshot object')
+
+    fik_ref = collection_ref.where(u'from', u'==',  sVar.twoFik.Name).limit(sVar.queryLimit).where(u'to', u'==', sVar.twoFik.ChatWith)
+    recipient_ref = collection_ref.where(u'to', u'==', sVar.twoFik.Name).limit(sVar.queryLimit).where(u'from', u'==',  sVar.twoFik.ChatWith)
+    
+    sVar.FromListener.SetNewListener(fik_ref)
+    sVar.toListener.SetNewListener(recipient_ref)
+    
     if sVar.testing: print('finished with queryChat')
 
 def ChangeQuery(frame, elem, exec_info):
@@ -125,56 +114,6 @@ def twofik_location(getID = False):
     else:
         return get_real_name(profile_selected)
 
-
-# Receives each messages depending on which persona is 2Fik incarning
-def on_snapshot(doc_snapshot, changes, read_time):
-    if sVar.testing: print('_____________________________________________________________________________________________________________')
-    if sVar.initMessage is True:
-        for change in changes:
-            if sVar.testing: print(f'changeType: {change.type.name}')
-            if change.type.name == 'ADDED':
-                doc = change.document
-                #doc = change.after()
-                messages = doc.to_dict()
-                if sVar.testing: print('__________________________________________________\\\\_______________________________________________________')
-                if sVar.testing: print(f'messages: {messages}')
-                if sVar.testing: print('__________________________________________________\\\\\______________________________________________________')
-                sender = get_real_name(messages.get('from'))
-                recipientID = messages.get('to')
-                recipient = get_real_name(recipientID)
-                #print(f'recipient: {recipient}')
-                time_of_reception = messages.get('time')
-                text = messages.get('body')
-                nameList = ["sender", "recipient", "recipientID", "time", "text"]
-                dataList = [str(sender), str(recipient), str(recipientID), str(time_of_reception), str(text)]
-                sVar.TD_CLI.AddToBuffer(nameList, dataList)
-        sVar.TD_CLI.SendMessage()
-    else:
-        if sVar.testing: print('entering else')
-        if sVar.testing: print(f'doc_snapshot: {doc_snapshot}' )
-        for doc in doc_snapshot:
-            messages = doc.to_dict()
-            #print(f'messages: {messages}')
-            sender = get_real_name(messages.get('from'))
-            recipientID = messages.get('to')
-            recipient = get_real_name(recipientID)
-            #print(f'recipient: {recipient}')
-            time_of_reception = messages.get('time')
-            text = messages.get('body')
-            nameList = ["sender", "recipient", "recipientID", "time", "text"]
-            dataList = [str(sender), str(recipient), str(recipientID), str(time_of_reception), str(text)]
-            sVar.TD_CLI.AddToBuffer(nameList, dataList)
-            if sVar.testing: print(f"sender:     {sender}")
-            if sVar.testing: print(f"recipient:  {recipient}")
-            if sVar.testing: print(f"time:       {time_of_reception}")
-            if sVar.testing: print(f"text:       {text}")
-            if sVar.testing: print('_____________________________________________________________________________________________________________')
-        sVar.initMessage = True
-        sVar.TD_CLI.SendMessage()
-    sVar.callbackDone.set()
-    if sVar.testing: print("finished query")
-
-
 while True:
     try:
         time.sleep(0.1)
@@ -182,9 +121,4 @@ while True:
     except KeyboardInterrupt:
         if sVar.testing: print('manual interupt')
         sys.exit()
-#if __name__=="__main__":
-#    try:
-#        main()
-#    except KeyboardInterrupt:
-#        print('interrupted')
-#        pass
+

@@ -2,8 +2,9 @@ import socket
 import sys
 
 class TDClient:
-    def __init__(self, ip_addr, port):
+    def __init__(self, ip_addr, port, DEBUG=False):
         self.families = self.get_constants('AF_')
+        self.testing = DEBUG
         self.ip = ip_addr
         self.port = port
         self.types = self.get_constants('SOCK_')
@@ -37,4 +38,4 @@ class TDClient:
         #print(message)
         self.sock.sendall(message)
         self.buffer = ""
-        #print(f'message sent {message} at server: {self.ip}:{self.port}')
+        if self.testing == True: print(f'message sent {message} at server: {self.ip}:{self.port}')
