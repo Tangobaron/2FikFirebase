@@ -24,21 +24,20 @@ class Inbox:
             self.addObject(user, lastMsg, timestamp)
 
         for person in self.persons:
-            print(f'{person} -> {self.persons[person][0]} -> {self.persons[person][1]}')
+            print(f'to -> {person} -> {self.persons[person][0]} -> {self.persons[person][1]}')
 
-    # def SentMessages(self, identification):
-    #     # Fetch all the latest messages sent by the profile 2Fik is currently using
-    #     sender_ref = self.db.collection('messages').where(u'from', u'==', identification).order_by(
-    #         u'time', direction=firestore.Query.DESCENDING).limit(self.maxIndex).stream()
-    #
-    #     for msg in sender_ref:
-    #         user = msg.get('to')
-    #         lastMsg = msg.get('body')
-    #         timestamp = msg.get('time')
-    #         self.addObject(user, lastMsg, timestamp)
-    #
-    #     for person in self.persons:
-    #         print(f'{person} -> {self.persons[person][0]} -> {self.persons[person][1]}')
+        # Fetch all the latest messages sent by the profile 2Fik is currently using
+        sender_ref = self.db.collection('messages').where(u'from', u'==', identification).order_by(
+            u'time', direction=firestore.Query.DESCENDING).limit(self.maxIndex).stream()
+
+        for msg in sender_ref:
+            user = msg.get('to')
+            lastMsg = msg.get('body')
+            timestamp = msg.get('time')
+            self.addObject(user, lastMsg, timestamp)
+
+        for person in self.persons:
+            print(f'from -> {person} -> {self.persons[person][0]} -> {self.persons[person][1]}')
 
     # add passed user and their latest messages
     def addObject(self, user, lastMsg, timestamp):
