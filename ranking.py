@@ -1,10 +1,11 @@
-import tabulate
+#import tabulate
 
 from td_client import TDClient
 
 class Ranking:
 
-    def __init__(self, database):
+    def __init__(self, database, DEBUG=False):
+        self.testing = DEBUG
         self.db = database
         self.not_leaderboard = []
         self.hot_leaderboard = []
@@ -34,9 +35,9 @@ class Ranking:
 
         header_hot = self.hot_leaderboard[0].keys()
         rows_hot = [x.values() for x in self.hot_leaderboard]
-        print(tabulate.tabulate(rows_hot, header_hot))
-        print('------------------------------------------')
+        #print(tabulate.tabulate(rows_hot, header_hot))
+        #print('------------------------------------------')
 
         header_not = self.not_leaderboard[0].keys()
         rows_not = [x.values() for x in self.not_leaderboard]
-        print(tabulate.tabulate(rows_not, header_not))
+        #print(tabulate.tabulate(rows_not, header_not))

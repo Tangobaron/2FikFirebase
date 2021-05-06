@@ -1,8 +1,7 @@
 import time
-
+import argparse
 import firebase_admin
 from firebase_admin import credentials, firestore
-from watchpoints import watch
 from inbox import Inbox as FillInbox
 from ranking import Ranking as FillRanking
 
@@ -18,27 +17,33 @@ import threading
 cred = credentials.Certificate("venv/securityAccountKey.json")
 firebase_admin.initialize_app(cred)
 db = firestore.client()
-inbox = FillInbox(db)
-ranking = FillRanking(db)
 sVar = None
+parser = argparse.ArgumentParser(description='2Fik python client. Connect firebase too touchdesigner')
+parser.add_argument('id', help='2Fik Uid needed to connect to his position and follow is action on the dating app.')
+parser.add_argument('-p', '--ports', nargs=5, dest='ports', default=[5780,5784,5786,5788,5792], help='List of port to be use by the app. They are 5 require[inbox,localisation,messageTo2Fik,messageFrom2Fik,cmdFromTouch]')
+args = parser.parse_args()
 
-
-# server related variable
 class serverVar():
+    # class containing constant we need through the application
     def __init__(self):
-        self.testing = False
+        self.testing = True
         self.isAlive = False
         self.doc_watch = None
         self.lastName = None
         self.twoFikID = None
         self.initMessage = False
         self.queryLimit = 30
-
+        #args
+        self.uid = args.id
+        #client that connect to different port of touchdesigner server
         self.CLI_inbox = TDClient('localhost',5780)
-        self.inbox = Inbox(db, self.CLI_inbox, DEBUG=False)
+        self.CLI_location = TDClient('localhost', 5784)
         self.CLI_from = TDClient('localhost', 5786)
         self.CLI_to = TDClient('localhost', 5788)
-        self.twoFik = Twofik(cred,db,'uTS21weWNkbggwHu16ScM1Nqart1', DEBUG=False)
+        #imported class instanciation
+        self.inbox = Inbox(db, self.CLI_inbox, DEBUG=False)
+        self.twoFik = Twofik(cred,db,'uTS21weWNkbggwHu16ScM1Nqart1', self.CLI_location, DEBUG=True)
+        self.ranking = FillRanking(db, DEBUG=True)
         self.FromListener = Listener(db, self.CLI_from, ACTION="Sent", callback=self.UpdateInbox, DEBUG=False)
         self.toListener = Listener(db, self.CLI_to, ACTION="Received", callback=self.UpdateInbox, DEBUG=False)
         #callbackDone = threading.Event()
@@ -51,7 +56,7 @@ class serverVar():
             sVar.inbox.CalculateInbox(sVar.twoFik.Name)
 
 
-def main():
+def sLoop():
     global sVar
     # inbox.CalculateInbox('9LBxGc6vCjQrVAq9WJKV7EKE2T53')
     if sVar is None:
@@ -91,8 +96,8 @@ def queryChat():
     fik_ref = collection_ref.where(u'from', u'==',  sVar.twoFik.Name).limit(sVar.queryLimit).where(u'to', u'==', sVar.twoFik.ChatWith)
     recipient_ref = collection_ref.where(u'to', u'==', sVar.twoFik.Name).limit(sVar.queryLimit).where(u'from', u'==',  sVar.twoFik.ChatWith)
     
-    # sVar.FromListener.SetNewListener(fik_ref)
-    # sVar.toListener.SetNewListener(recipient_ref)
+    sVar.FromListener.SetNewListener(fik_ref)
+    sVar.toListener.SetNewListener(recipient_ref)
     
     if sVar.testing: print('finished with queryChat')
 
@@ -151,7 +156,7 @@ def twofik_location(getID=False):
 while True:
     try:
         time.sleep(0.1)
-        main()
+        sLoop()
     except KeyboardInterrupt:
         if sVar.testing: print('manual interupt')
         sys.exit()

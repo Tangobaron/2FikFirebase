@@ -6,11 +6,11 @@ from firebase_admin import credentials, firestore
 from td_client import TDClient
 
 class Twofik:
-    def __init__(self, cred, db, identification, DEBUG = False):
+    def __init__(self, cred, db, identification, client, DEBUG = False):
         self.testing = DEBUG
         self.credential = cred
         self.db = db
-        # self.cli = TDClient('localhost', 5784)
+        self.cli = client
         self.twofikID = identification
         self.lastSpeakWith = None
         #variable related to 2fik location
@@ -60,8 +60,8 @@ class Twofik:
     def sendUpdate(self):
         nameList = ["Twofik_ID", "Name", "Body_Location", "Panel_Location", "Visited_Profile", "Chat_With", "Chat_ID"]
         dataList = [str(self.Name), str(self.get_real_name(self.Name)), str(self.BodyLocation), str(self.PanelLocation), str(self.VisitedProfile), str(self.get_real_name(self.ChatWith)), str(self.ChatWith)]
-        # self.cli.AddToBuffer(nameList, dataList)
-        # self.cli.SendMessage()
+        self.cli.AddToBuffer(nameList, dataList)
+        self.cli.SendMessage()
 
     def Follow2fik(self):
         if self.testing: print(f'Following twofik at id: {self.twofikID}')
@@ -70,7 +70,6 @@ class Twofik:
 
     def twofikLocation(self, getID = False):
         # super user to track (in this case Raph for now)
-        #identification = 'uTS21weWNkbggwHu16ScM1Nqart1'
         # firebase database reference
         location_ref = self.db.collection(u'location').document(self.twofikID).get()
         dictionary = location_ref.to_dict()
