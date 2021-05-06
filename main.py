@@ -9,6 +9,7 @@ from ranking import Ranking as FillRanking
 from td_client import TDClient
 from twofik_localisation import Twofik
 from snapshot_class import Snapshot as Listener
+from inbox import Inbox
 import time
 import socket
 import sys
@@ -24,18 +25,30 @@ sVar = None
 
 # server related variable
 class serverVar():
-    testing = False
-    queryLimit = 30
-    # CLI_from = TDClient('localhost', 5786)
-    # CLI_to = TDClient('localhost', 5788)
-    isAlive = False
-    twoFik = Twofik(cred,db,'uTS21weWNkbggwHu16ScM1Nqart1', DEBUG=False)
-    doc_watch = None
-    lastName = None
-    initMessage = False
-    # FromListener = Listener(db, CLI_from, ACTION="Sent", DEBUG=False)
-    # toListener = Listener(db, CLI_to, ACTION="Received", DEBUG=False)
-    #callbackDone = threading.Event()
+    def __init__(self):
+        self.testing = False
+        self.isAlive = False
+        self.doc_watch = None
+        self.lastName = None
+        self.twoFikID = None
+        self.initMessage = False
+        self.queryLimit = 30
+
+        self.CLI_inbox = TDClient('localhost',5780)
+        self.inbox = Inbox(db, self.CLI_inbox, DEBUG=False)
+        self.CLI_from = TDClient('localhost', 5786)
+        self.CLI_to = TDClient('localhost', 5788)
+        self.twoFik = Twofik(cred,db,'uTS21weWNkbggwHu16ScM1Nqart1', DEBUG=False)
+        self.FromListener = Listener(db, self.CLI_from, ACTION="Sent", callback=self.UpdateInbox, DEBUG=False)
+        self.toListener = Listener(db, self.CLI_to, ACTION="Received", callback=self.UpdateInbox, DEBUG=False)
+        #callbackDone = threading.Event()
+
+    def UpdateInbox(self):
+        global sVar
+        if sVar.testing is True: print(f'persona: {sVar.twoFik.Name}')
+        if sVar.twoFik.Name is not None:
+            if sVar.testing is True: print('entering if in UpdateInbox')
+            sVar.inbox.CalculateInbox(sVar.twoFik.Name)
 
 
 def main():
@@ -51,20 +64,22 @@ def main():
         if sVar.testing: print("----------------------| updating message query")
         queryChat()
         sVar.lastName = sVar.twoFik.ChatWith
+    if sVar.twoFikID != sVar.twoFik.Name:
+        if sVar.testing is True: print("launch inbox update")
+        sVar.inbox.CalculateInbox(sVar.twoFik.Name)
+        sVar.twoFikID = sVar.twoFik.Name
 
 
 # Follow 2fik location in real time
 
 def init():
-    # twoFikID = twofik_location(True)
+    global sVar
     # start listener on message collection
-    # collection_ref = db.collection('messages')
-    # fik_ref = collection_ref.where(u'from', u'==',  twoFikID).limit(10)
     queryChat()
     # serverVar.doc_watch = fik_ref.on_snapshot(on_snapshot)
     # create twoFik status object and start listening on it<s in app location
-    serverVar.twoFik.Follow2fik()
-    ranking
+    sVar.twoFik.Follow2fik()
+    #sVar.inbox.CalculateInbox(sVar.twoFik.Name)
     return True
 
 def queryChat():
