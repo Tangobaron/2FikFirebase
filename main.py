@@ -3,6 +3,8 @@ import time
 import firebase_admin
 from firebase_admin import credentials, firestore
 from watchpoints import watch
+from inbox import Inbox as FillInbox
+from ranking import Ranking as FillRanking
 
 from td_client import TDClient
 from twofik_localisation import Twofik
@@ -15,6 +17,8 @@ import threading
 cred = credentials.Certificate("venv/securityAccountKey.json")
 firebase_admin.initialize_app(cred)
 db = firestore.client()
+inbox = FillInbox(db)
+ranking = FillRanking(db)
 sVar = None
 
 
@@ -22,20 +26,21 @@ sVar = None
 class serverVar():
     testing = False
     queryLimit = 30
-    CLI_from = TDClient('localhost', 5786)
-    CLI_to = TDClient('localhost', 5788)
+    # CLI_from = TDClient('localhost', 5786)
+    # CLI_to = TDClient('localhost', 5788)
     isAlive = False
     twoFik = Twofik(cred,db,'uTS21weWNkbggwHu16ScM1Nqart1', DEBUG=False)
     doc_watch = None
     lastName = None
     initMessage = False
-    FromListener = Listener(db, CLI_from, ACTION="Sent", DEBUG=False)
-    toListener = Listener(db, CLI_to, ACTION="Received", DEBUG=False)
+    # FromListener = Listener(db, CLI_from, ACTION="Sent", DEBUG=False)
+    # toListener = Listener(db, CLI_to, ACTION="Received", DEBUG=False)
     #callbackDone = threading.Event()
 
 
 def main():
     global sVar
+    # inbox.CalculateInbox('9LBxGc6vCjQrVAq9WJKV7EKE2T53')
     if sVar is None:
         sVar = serverVar()
     if sVar.isAlive is False:
@@ -59,6 +64,7 @@ def init():
     # serverVar.doc_watch = fik_ref.on_snapshot(on_snapshot)
     # create twoFik status object and start listening on it<s in app location
     serverVar.twoFik.Follow2fik()
+    ranking
     return True
 
 def queryChat():
@@ -70,8 +76,8 @@ def queryChat():
     fik_ref = collection_ref.where(u'from', u'==',  sVar.twoFik.Name).limit(sVar.queryLimit).where(u'to', u'==', sVar.twoFik.ChatWith)
     recipient_ref = collection_ref.where(u'to', u'==', sVar.twoFik.Name).limit(sVar.queryLimit).where(u'from', u'==',  sVar.twoFik.ChatWith)
     
-    sVar.FromListener.SetNewListener(fik_ref)
-    sVar.toListener.SetNewListener(recipient_ref)
+    # sVar.FromListener.SetNewListener(fik_ref)
+    # sVar.toListener.SetNewListener(recipient_ref)
     
     if sVar.testing: print('finished with queryChat')
 

@@ -10,7 +10,7 @@ class Twofik:
         self.testing = DEBUG
         self.credential = cred
         self.db = db
-        self.cli = TDClient('localhost', 5784)
+        # self.cli = TDClient('localhost', 5784)
         self.twofikID = identification
         self.lastSpeakWith = None
         #variable related to 2fik location
@@ -60,8 +60,8 @@ class Twofik:
     def sendUpdate(self):
         nameList = ["Twofik_ID", "Name", "Body_Location", "Panel_Location", "Visited_Profile", "Chat_With", "Chat_ID"]
         dataList = [str(self.Name), str(self.get_real_name(self.Name)), str(self.BodyLocation), str(self.PanelLocation), str(self.VisitedProfile), str(self.get_real_name(self.ChatWith)), str(self.ChatWith)]
-        self.cli.AddToBuffer(nameList, dataList)
-        self.cli.SendMessage()
+        # self.cli.AddToBuffer(nameList, dataList)
+        # self.cli.SendMessage()
 
     def Follow2fik(self):
         if self.testing: print(f'Following twofik at id: {self.twofikID}')
