@@ -1,6 +1,5 @@
 from td_client import TDClient
 
-
 class Ranking:
 
     def __init__(self, database):
