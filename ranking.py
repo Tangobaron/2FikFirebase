@@ -1,5 +1,6 @@
 #import tabulate
-
+import firebase_admin
+import threading
 from td_client import TDClient
 
 class Ranking:
@@ -10,12 +11,16 @@ class Ranking:
         self.not_leaderboard = []
         self.hot_leaderboard = []
         self.list_size = 7
+        self.docWatch = None
         # self.cli = TDClient('localhost', 1)
 
         # Reference to all of 2Fik profiles
-        rank_ref = self.db.collection('profiles').where(u'state', u'==', '2fik').stream()
-
+        ref = self.db.collection('ranks')
         # Extract all the names, hotCount and notCount of every 2Fik profiles
+        self.docWatch = ref.on_snapshot(self.on_snapshot)
+
+    def on_snapshot(self, doc_snapshot, changes, read_time):
+        rank_ref = self.db.collection('profiles').where(u'state', u'==', '2fik').stream()
         for rank in rank_ref:
             name = rank.get('name')
             uid = rank.id
@@ -35,9 +40,11 @@ class Ranking:
 
         header_hot = self.hot_leaderboard[0].keys()
         rows_hot = [x.values() for x in self.hot_leaderboard]
+        if self.testing is True: print(f'not leaderboard: {self.hot_leaderboard}')
         #print(tabulate.tabulate(rows_hot, header_hot))
         #print('------------------------------------------')
 
         header_not = self.not_leaderboard[0].keys()
         rows_not = [x.values() for x in self.not_leaderboard]
+        if self.testing is True: print(f'not leaderboard: {self.not_leaderboard}')
         #print(tabulate.tabulate(rows_not, header_not))

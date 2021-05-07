@@ -37,7 +37,7 @@ class serverVar():
         #client that connect to different port of touchdesigner server
         #self.responseServer = TDServer('localhost',int(args.ports[4]), DEBUG=True)
         self.CLI_inbox = TDClient('localhost', int(args.ports[0]), DEBUG=False)
-        self.CLI_location = TDClient('localhost', int(args.ports[1]), DEBUG=False)
+        self.CLI_location = TDClient('localhost', int(args.ports[1]), DEBUG=True)
         self.CLI_from = TDClient('localhost', int(args.ports[3]), DEBUG=False)
         self.CLI_to = TDClient('localhost', int(args.ports[2]), DEBUG=False)
         #imported class instanciation
