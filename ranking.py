@@ -1,6 +1,5 @@
-import tabulate
-
 from td_client import TDClient
+
 
 class Ranking:
 
@@ -22,21 +21,16 @@ class Ranking:
             not_count = rank.get('notCount')
 
             if hot_count > not_count:
-                hot_dict = {'uid': uid, 'name': name, 'hot_count': hot_count}
-                if len(self.hot_leaderboard) < self.list_size:
-                    self.hot_leaderboard.append(hot_dict)
-                    self.hot_leaderboard.sort(key=lambda i: i['hot_count'], reverse=True)
+                hot_dict = {'UID': uid, 'Name': name, 'Hot Count': hot_count}
+                self.hot_leaderboard.append(hot_dict)
+                self.hot_leaderboard.sort(key=lambda i: i['Hot Count'], reverse=True)
+                self.hot_leaderboard = self.hot_leaderboard[:self.list_size]
+
             elif not_count > hot_count:
-                not_dict = {'uid': uid, 'name': name, 'not_count': not_count}
-                if len(self.not_leaderboard) < self.list_size:
-                    self.not_leaderboard.append(not_dict)
-                    self.not_leaderboard.sort(key=lambda i: i['not_count'], reverse=True)
+                not_dict = {'UID': uid, 'Name': name, 'Not Count': not_count}
+                self.not_leaderboard.append(not_dict)
+                self.not_leaderboard.sort(key=lambda i: i['Not Count'], reverse=True)
+                self.not_leaderboard = self.not_leaderboard[:self.list_size]
 
-        header_hot = self.hot_leaderboard[0].keys()
-        rows_hot = [x.values() for x in self.hot_leaderboard]
-        print(tabulate.tabulate(rows_hot, header_hot))
-        print('------------------------------------------')
-
-        header_not = self.not_leaderboard[0].keys()
-        rows_not = [x.values() for x in self.not_leaderboard]
-        print(tabulate.tabulate(rows_not, header_not))
+        print(f'Hot Leaderboard -> {self.hot_leaderboard}')
+        print(f'Not Leaderboard -> {self.not_leaderboard}')
