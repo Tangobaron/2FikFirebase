@@ -1,9 +1,6 @@
-<<<<<<< HEAD
-=======
 #import tabulate
 import firebase_admin
 import threading
->>>>>>> develop
 from td_client import TDClient
 
 class Ranking:
