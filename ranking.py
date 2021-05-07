@@ -5,12 +5,12 @@ from td_client import TDClient
 
 class Ranking:
 
-    def __init__(self, database, DEBUG=False):
+    def __init__(self, database, nbrQuery, DEBUG=False):
         self.testing = DEBUG
         self.db = database
         self.not_leaderboard = []
         self.hot_leaderboard = []
-        self.list_size = 7
+        self.list_size = nbrQuery
         self.docWatch = None
         # self.cli = TDClient('localhost', 1)
 

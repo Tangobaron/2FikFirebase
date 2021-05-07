@@ -4,7 +4,6 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 from inbox import Inbox as FillInbox
 from ranking import Ranking as FillRanking
-from td_server import TDServer
 from td_client import TDClient
 from twofik_localisation import Twofik
 from snapshot_class import Snapshot as Listener
@@ -20,7 +19,7 @@ db = firestore.client()
 sVar = None
 parser = argparse.ArgumentParser(description='2Fik python client. Connect firebase too touchdesigner')
 parser.add_argument('id', help='2Fik uid needed to connect to his position and follow is action on the dating app.')
-parser.add_argument('-p', '--ports', nargs=5, dest='ports', default=[5780,5784,5786,5788,5792], help='List of port to be use by the app. They are 5 require[inbox,localisation,messageTo2Fik,messageFrom2Fik,cmdFromTouch]')
+parser.add_argument('-p', '--ports', nargs=5, dest='ports', default=[5780,5784,5786,5788,5792], help='List of port to be use by the app. They are 5 require[inbox,localisation,messageTo2Fik,messageFrom2Fik,HotorNot]')
 parser.add_argument('-d', '--debug', type=int, dest='DEBUG', default=0, help='this variable range from 0 to 3. It determine the level of verbose you\'ll get from the python app. Higher the verbose lower the performance. Let to default for maximum performance')
 args = parser.parse_args()
 
@@ -35,15 +34,14 @@ class serverVar():
         self.initMessage = False
         self.queryLimit = 30
         #client that connect to different port of touchdesigner server
-        #self.responseServer = TDServer('localhost',int(args.ports[4]), DEBUG=True)
         self.CLI_inbox = TDClient('localhost', int(args.ports[0]), DEBUG=False)
-        self.CLI_location = TDClient('localhost', int(args.ports[1]), DEBUG=True)
+        self.CLI_location = TDClient('localhost', int(args.ports[1]), DEBUG=False)
         self.CLI_from = TDClient('localhost', int(args.ports[3]), DEBUG=False)
         self.CLI_to = TDClient('localhost', int(args.ports[2]), DEBUG=False)
         #imported class instanciation
         self.inbox = Inbox(db, self.CLI_inbox, DEBUG=False)
         self.twoFik = Twofik(cred,db,str(args.id), self.CLI_location, DEBUG=False)
-        self.ranking = FillRanking(db, DEBUG=True)
+        self.ranking = FillRanking(db, 7, DEBUG=True)
         self.FromListener = Listener(db, self.CLI_from, ACTION="Sent", callback=self.UpdateInbox, DEBUG=False)
         self.toListener = Listener(db, self.CLI_to, ACTION="Received", callback=self.UpdateInbox, DEBUG=False)
         #callbackDone = threading.Event()
