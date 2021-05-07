@@ -1,10 +1,9 @@
 import time
-
+import argparse
 import firebase_admin
 from firebase_admin import credentials, firestore
 from inbox import Inbox as FillInbox
 from ranking import Ranking as FillRanking
-
 from td_client import TDClient
 from twofik_localisation import Twofik
 from snapshot_class import Snapshot as Listener
@@ -17,13 +16,15 @@ import threading
 cred = credentials.Certificate("venv/securityAccountKey.json")
 firebase_admin.initialize_app(cred)
 db = firestore.client()
-inbox = FillInbox(db)
-ranking = FillRanking(db)
 sVar = None
+parser = argparse.ArgumentParser(description='2Fik python client. Connect firebase too touchdesigner')
+parser.add_argument('id', help='2Fik uid needed to connect to his position and follow is action on the dating app.')
+parser.add_argument('-p', '--ports', nargs=5, dest='ports', default=[5780,5784,5786,5788,5792], help='List of port to be use by the app. They are 5 require[inbox,localisation,messageTo2Fik,messageFrom2Fik,HotorNot]')
+parser.add_argument('-d', '--debug', type=int, dest='DEBUG', default=0, help='this variable range from 0 to 3. It determine the level of verbose you\'ll get from the python app. Higher the verbose lower the performance. Let to default for maximum performance')
+args = parser.parse_args()
 
-
-# server related variable
 class serverVar():
+    # class containing constant we need through the application
     def __init__(self):
         self.testing = False
         self.isAlive = False
@@ -32,12 +33,15 @@ class serverVar():
         self.twoFikID = None
         self.initMessage = False
         self.queryLimit = 30
-
-        self.CLI_inbox = TDClient('localhost',5780)
+        #client that connect to different port of touchdesigner server
+        self.CLI_inbox = TDClient('localhost', int(args.ports[0]), DEBUG=False)
+        self.CLI_location = TDClient('localhost', int(args.ports[1]), DEBUG=False)
+        self.CLI_from = TDClient('localhost', int(args.ports[3]), DEBUG=False)
+        self.CLI_to = TDClient('localhost', int(args.ports[2]), DEBUG=False)
+        #imported class instanciation
         self.inbox = Inbox(db, self.CLI_inbox, DEBUG=False)
-        self.CLI_from = TDClient('localhost', 5786)
-        self.CLI_to = TDClient('localhost', 5788)
-        self.twoFik = Twofik(cred,db,'uTS21weWNkbggwHu16ScM1Nqart1', DEBUG=False)
+        self.twoFik = Twofik(cred,db,str(args.id), self.CLI_location, DEBUG=False)
+        self.ranking = FillRanking(db, 7, DEBUG=True)
         self.FromListener = Listener(db, self.CLI_from, ACTION="Sent", callback=self.UpdateInbox, DEBUG=False)
         self.toListener = Listener(db, self.CLI_to, ACTION="Received", callback=self.UpdateInbox, DEBUG=False)
         #callbackDone = threading.Event()
@@ -50,13 +54,12 @@ class serverVar():
             sVar.inbox.CalculateInbox(sVar.twoFik.Name)
 
 
-def main():
+def sLoop():
     global sVar
-    # inbox.CalculateInbox('9LBxGc6vCjQrVAq9WJKV7EKE2T53')
     if sVar is None:
         sVar = serverVar()
     if sVar.isAlive is False:
-        if sVar.testing: print("Initialise server")
+        print("Initialise server")
         # Creates a reference to the messages collection
         sVar.isAlive = init()
     if sVar.lastName != sVar.twoFik.ChatWith:
@@ -67,6 +70,9 @@ def main():
         if sVar.testing is True: print("launch inbox update")
         sVar.inbox.CalculateInbox(sVar.twoFik.Name)
         sVar.twoFikID = sVar.twoFik.Name
+    #if sVar.isAlive is True:
+        #sVar.responseServer.CheckConnection()
+    
 
 
 # Follow 2fik location in real time
@@ -90,8 +96,8 @@ def queryChat():
     fik_ref = collection_ref.where(u'from', u'==',  sVar.twoFik.Name).limit(sVar.queryLimit).where(u'to', u'==', sVar.twoFik.ChatWith)
     recipient_ref = collection_ref.where(u'to', u'==', sVar.twoFik.Name).limit(sVar.queryLimit).where(u'from', u'==',  sVar.twoFik.ChatWith)
     
-    # sVar.FromListener.SetNewListener(fik_ref)
-    # sVar.toListener.SetNewListener(recipient_ref)
+    sVar.FromListener.SetNewListener(fik_ref)
+    sVar.toListener.SetNewListener(recipient_ref)
     
     if sVar.testing: print('finished with queryChat')
 
@@ -150,7 +156,7 @@ def twofik_location(getID=False):
 while True:
     try:
         time.sleep(0.1)
-        main()
+        sLoop()
     except KeyboardInterrupt:
         if sVar.testing: print('manual interupt')
         sys.exit()
