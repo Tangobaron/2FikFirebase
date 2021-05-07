@@ -11,6 +11,7 @@ class TDClient:
         self.protocols = self.get_constants('IPPROTO_')
         self.sock = socket.create_connection((ip_addr, port))
         self.buffer = ""
+        if self.testing is True: print(f'ip addr: {self.ip}, port: {self.port}')
     #basic setup for tcp connection source https://pymotw.com/2/socket/tcp.html
     def get_constants(self, prefix):
         """Create a dictionary mapping socket module constants to their names."""

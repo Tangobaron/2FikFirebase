@@ -4,7 +4,7 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 from inbox import Inbox as FillInbox
 from ranking import Ranking as FillRanking
-
+from td_server import TDServer
 from td_client import TDClient
 from twofik_localisation import Twofik
 from snapshot_class import Snapshot as Listener
@@ -19,30 +19,30 @@ firebase_admin.initialize_app(cred)
 db = firestore.client()
 sVar = None
 parser = argparse.ArgumentParser(description='2Fik python client. Connect firebase too touchdesigner')
-parser.add_argument('id', help='2Fik Uid needed to connect to his position and follow is action on the dating app.')
+parser.add_argument('id', help='2Fik uid needed to connect to his position and follow is action on the dating app.')
 parser.add_argument('-p', '--ports', nargs=5, dest='ports', default=[5780,5784,5786,5788,5792], help='List of port to be use by the app. They are 5 require[inbox,localisation,messageTo2Fik,messageFrom2Fik,cmdFromTouch]')
+parser.add_argument('-d', '--debug', type=int, dest='DEBUG', default=0, help='this variable range from 0 to 3. It determine the level of verbose you\'ll get from the python app. Higher the verbose lower the performance. Let to default for maximum performance')
 args = parser.parse_args()
 
 class serverVar():
     # class containing constant we need through the application
     def __init__(self):
-        self.testing = True
+        self.testing = False
         self.isAlive = False
         self.doc_watch = None
         self.lastName = None
         self.twoFikID = None
         self.initMessage = False
         self.queryLimit = 30
-        #args
-        self.uid = args.id
         #client that connect to different port of touchdesigner server
-        self.CLI_inbox = TDClient('localhost',5780)
-        self.CLI_location = TDClient('localhost', 5784)
-        self.CLI_from = TDClient('localhost', 5786)
-        self.CLI_to = TDClient('localhost', 5788)
+        #self.responseServer = TDServer('localhost',int(args.ports[4]), DEBUG=True)
+        self.CLI_inbox = TDClient('localhost', int(args.ports[0]), DEBUG=False)
+        self.CLI_location = TDClient('localhost', int(args.ports[1]), DEBUG=False)
+        self.CLI_from = TDClient('localhost', int(args.ports[3]), DEBUG=False)
+        self.CLI_to = TDClient('localhost', int(args.ports[2]), DEBUG=False)
         #imported class instanciation
         self.inbox = Inbox(db, self.CLI_inbox, DEBUG=False)
-        self.twoFik = Twofik(cred,db,'uTS21weWNkbggwHu16ScM1Nqart1', self.CLI_location, DEBUG=True)
+        self.twoFik = Twofik(cred,db,str(args.id), self.CLI_location, DEBUG=False)
         self.ranking = FillRanking(db, DEBUG=True)
         self.FromListener = Listener(db, self.CLI_from, ACTION="Sent", callback=self.UpdateInbox, DEBUG=False)
         self.toListener = Listener(db, self.CLI_to, ACTION="Received", callback=self.UpdateInbox, DEBUG=False)
@@ -58,11 +58,10 @@ class serverVar():
 
 def sLoop():
     global sVar
-    # inbox.CalculateInbox('9LBxGc6vCjQrVAq9WJKV7EKE2T53')
     if sVar is None:
         sVar = serverVar()
     if sVar.isAlive is False:
-        if sVar.testing: print("Initialise server")
+        print("Initialise server")
         # Creates a reference to the messages collection
         sVar.isAlive = init()
     if sVar.lastName != sVar.twoFik.ChatWith:
@@ -73,6 +72,9 @@ def sLoop():
         if sVar.testing is True: print("launch inbox update")
         sVar.inbox.CalculateInbox(sVar.twoFik.Name)
         sVar.twoFikID = sVar.twoFik.Name
+    #if sVar.isAlive is True:
+        #sVar.responseServer.CheckConnection()
+    
 
 
 # Follow 2fik location in real time

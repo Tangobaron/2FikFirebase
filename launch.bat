@@ -1,1 +1,0 @@
-start python3 main.py $1 -p $2 $3 $4 $5 $6 >> output.txt
