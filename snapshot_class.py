@@ -6,12 +6,13 @@ import threading
 from td_client import TDClient
 from firebase_admin import credentials, firestore
 class Snapshot:
-    def __init__(self, database, TDClient, ACTION = None, DEBUG = False):
+    def __init__(self, database, TDClient, ACTION = None, callback = None, DEBUG = False):
         self.testing = DEBUG
         self.db = database
         self.initialQuery = False
         self.client = TDClient
         self.callbackDone = threading.Event()
+        self.extCallback = callback
         self.docWatch = None
         self.action = ACTION
     
@@ -35,6 +36,8 @@ class Snapshot:
     def on_snapshot(self, doc_snapshot, changes, read_time):
         #need to be last 2 line of this function 
         if self.testing: print("finished query")
+        if self.extCallback is not None:
+            self.extCallback()
         if self.initialQuery is False:
             self.query_init(doc_snapshot)
         else:
