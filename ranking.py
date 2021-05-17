@@ -1,7 +1,8 @@
-#import tabulate
+# import tabulate
 import firebase_admin
 import threading
 from td_client import TDClient
+
 
 class Ranking:
 
@@ -30,16 +31,15 @@ class Ranking:
             hot_count = rank.get('hotCount')
             not_count = rank.get('notCount')
 
-            if hot_count > not_count:
-                hot_dict = {'UID': uid, 'Name': name, 'Hot Count': hot_count}
-                self.hot_leaderboard.append(hot_dict)
-                self.hot_leaderboard.sort(key=lambda i: i['Hot Count'], reverse=True)
-                self.hot_leaderboard = self.hot_leaderboard[:self.list_size]
-            else:
-                not_dict = {'UID': uid, 'Name': name, 'Not Count': not_count}
-                self.not_leaderboard.append(not_dict)
-                self.not_leaderboard.sort(key=lambda i: i['Not Count'], reverse=True)
-                self.not_leaderboard = self.not_leaderboard[:self.list_size]
+            hot_dict = {'UID': uid, 'Name': name, 'Hot Count': hot_count}
+            self.hot_leaderboard.append(hot_dict)
+            self.hot_leaderboard.sort(key=lambda i: i['Hot Count'], reverse=True)
+            self.hot_leaderboard = self.hot_leaderboard[:self.list_size]
+
+            not_dict = {'UID': uid, 'Name': name, 'Not Count': not_count}
+            self.not_leaderboard.append(not_dict)
+            self.not_leaderboard.sort(key=lambda i: i['Not Count'], reverse=True)
+            self.not_leaderboard = self.not_leaderboard[:self.list_size]
         self.composeMessage()
         if self.testing is True: print(f'Hot Leaderboard -> {self.hot_leaderboard}')
         if self.testing is True: print(f'Not Leaderboard -> {self.not_leaderboard}')
@@ -54,4 +54,3 @@ class Ranking:
             datas = [rank.get("UID"), rank.get("Name"), rank.get("Hot Count"),"Hot"]
             self.CLI.AddToBuffer(labels, datas)
         self.CLI.SendMessage()
-
