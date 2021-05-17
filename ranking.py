@@ -5,9 +5,10 @@ from td_client import TDClient
 
 class Ranking:
 
-    def __init__(self, database, nbrQuery, DEBUG=False):
+    def __init__(self, database, client, nbrQuery, DEBUG=False):
         self.testing = DEBUG
         self.db = database
+        self.CLI = client
         self.not_leaderboard = []
         self.hot_leaderboard = []
         self.list_size = nbrQuery
@@ -20,6 +21,8 @@ class Ranking:
         self.docWatch = ref.on_snapshot(self.on_snapshot)
 
     def on_snapshot(self, doc_snapshot, changes, read_time):
+        self.not_leaderboard = []
+        self.hot_leaderboard = []
         rank_ref = self.db.collection('profiles').where(u'state', u'==', '2fik').stream()
         for rank in rank_ref:
             name = rank.get('name')
@@ -37,7 +40,18 @@ class Ranking:
                 self.not_leaderboard.append(not_dict)
                 self.not_leaderboard.sort(key=lambda i: i['Not Count'], reverse=True)
                 self.not_leaderboard = self.not_leaderboard[:self.list_size]
+        self.composeMessage()
+        if self.testing is True: print(f'Hot Leaderboard -> {self.hot_leaderboard}')
+        if self.testing is True: print(f'Not Leaderboard -> {self.not_leaderboard}')
 
-        print(f'Hot Leaderboard -> {self.hot_leaderboard}')
-        print(f'Not Leaderboard -> {self.not_leaderboard}')
+    def composeMessage(self):
+        for rank in self.not_leaderboard:
+            labels = ["ID", "name", "count","type"]
+            datas = [rank.get("UID"), rank.get("Name"), rank.get("Not Count"),"Not"]
+            self.CLI.AddToBuffer(labels, datas)
+        for rank in self.hot_leaderboard:
+            labels = ["ID", "name", "count","type"]
+            datas = [rank.get("UID"), rank.get("Name"), rank.get("Hot Count"),"Hot"]
+            self.CLI.AddToBuffer(labels, datas)
+        self.CLI.SendMessage()
 

@@ -25,7 +25,7 @@ class TDClient:
         i = 0
         for subject in data:
             msg += str(name[i]) + "::"
-            msg += str(subject) + ";; "
+            msg += str(subject) + ";;"
             i += 1
         msg += "\r\n"
         return msg

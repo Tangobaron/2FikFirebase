@@ -52,10 +52,8 @@ class Twofik:
         self.sendUpdate()
     
     def get_real_name(self, uid):
-        names_ref = self.db.collection(u'profiles').get()
-        for name in names_ref:
-            if uid == name.id:
-                return name.get('name')
+        names_ref = self.db.collection(u'profiles').document(uid).get()
+        return names_ref.get('name')
 
     def sendUpdate(self):
         nameList = ["Twofik_ID", "Name", "Body_Location", "Panel_Location", "Visited_Profile", "Chat_With", "Chat_ID"]

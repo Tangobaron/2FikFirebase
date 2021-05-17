@@ -20,7 +20,7 @@ sVar = None
 parser = argparse.ArgumentParser(description='2Fik python client. Connect firebase too touchdesigner')
 parser.add_argument('id', help='2Fik uid needed to connect to his position and follow is action on the dating app.')
 parser.add_argument('-p', '--ports', nargs=5, dest='ports', default=[5780,5784,5786,5788,5792], help='List of port to be use by the app. They are 5 require[inbox,localisation,messageTo2Fik,messageFrom2Fik,HotorNot]')
-parser.add_argument('-d', '--debug', type=int, dest='DEBUG', default=0, help='this variable range from 0 to 3. It determine the level of verbose you\'ll get from the python app. Higher the verbose lower the performance. Let to default for maximum performance')
+#parser.add_argument('-d', '--debug', type=int, dest='DEBUG', default=0, help='this variable range from 0 to 3. It determine the level of verbose you\'ll get from the python app. Higher the verbose lower the performance. Let to default for maximum performance')
 args = parser.parse_args()
 
 class serverVar():
@@ -38,10 +38,11 @@ class serverVar():
         self.CLI_location = TDClient('localhost', int(args.ports[1]), DEBUG=False)
         self.CLI_from = TDClient('localhost', int(args.ports[3]), DEBUG=False)
         self.CLI_to = TDClient('localhost', int(args.ports[2]), DEBUG=False)
+        self.CLI_rank = TDClient('localhost', int(args.ports[4]), DEBUG=False)
         #imported class instanciation
         self.inbox = Inbox(db, self.CLI_inbox, DEBUG=False)
         self.twoFik = Twofik(cred,db,str(args.id), self.CLI_location, DEBUG=False)
-        self.ranking = FillRanking(db, 7, DEBUG=True)
+        self.ranking = FillRanking(db, self.CLI_rank, 7, DEBUG=False)
         self.FromListener = Listener(db, self.CLI_from, ACTION="Sent", callback=self.UpdateInbox, DEBUG=False)
         self.toListener = Listener(db, self.CLI_to, ACTION="Received", callback=self.UpdateInbox, DEBUG=False)
         #callbackDone = threading.Event()
@@ -118,10 +119,8 @@ def twofik_profile_names():
 
 # Gets a single real name from a UID
 def get_real_name(uid):
-    names_ref = db.collection(u'profiles').get()
-    for name in names_ref:
-        if uid == name.id:
-            return name.get('name')
+    names_ref = db.collection(u'profiles').document(uid).get()
+    return names_ref.get('name')
 
 # Where is 2Fik in the app and which profile is he using
 def twofik_location(getID=False):
@@ -155,7 +154,6 @@ def twofik_location(getID=False):
 
 while True:
     try:
-        time.sleep(0.1)
         sLoop()
     except KeyboardInterrupt:
         if sVar.testing: print('manual interupt')

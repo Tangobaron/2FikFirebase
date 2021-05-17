@@ -17,21 +17,21 @@ class Snapshot:
         self.action = ACTION
     
     def get_real_name(self, uid):
-        names_ref = self.db.collection(u'profiles').get()
-        for name in names_ref:
-            if uid == name.id:
-                return name.get('name')
+        names_ref = self.db.collection(u'profiles').document(uid).get()
+        return names_ref.get('name')
 
-    def StartListening(self, doc):
-        self.docWatch = doc.on_snapshot(self.on_snapshot)
 
     def SetNewListener(self, doc):
         if self.docWatch is not None:
             if self.testing: print("remove listener after the callback trigger")
             self.callbackDone.wait(timeout=30)
+            if self.testing: print("finish removing")
             self.docWatch.unsubscribe()
             self.initialQuery = False
         self.docWatch = doc.on_snapshot(self.on_snapshot)
+
+    def returnStream(self):
+        print("returnStream")
 
     def on_snapshot(self, doc_snapshot, changes, read_time):
         #need to be last 2 line of this function 
@@ -54,25 +54,36 @@ class Snapshot:
 
     def query_init(self, doc_snapshot):
         for doc in doc_snapshot:
-            messages = doc.to_dict()
+            if self.testing: print('newEntry')
+            messages = doc
             #print(f'messages: {messages}')
-            sender = self.get_real_name(messages.get('from'))
-            recipientID = messages.get('to')
-            senderID = messages.get('from')
-            recipient = self.get_real_name(recipientID)
+            #sender = self.get_real_name(messages.get('from'))
+            #sender = "testSender"
+            #recipientID = messages.get('to')
+            #senderID = messages.get('from')
+            #recipient = self.get_real_name(recipientID)
+            target = ""
+            if(self.action == "Received"):
+                target = messages.get('from')
+            elif(self.action == "Sent"):
+                target = messages.get('to')
             #print(f'recipient: {recipient}')
-            time_of_reception = self.formatTime(messages.get('time'))
+            time_of_reception = self.formatTime(messages.get('time'))#self.formatTime(messages.get('time'))
             text = messages.get('body')
-            nameList = ["sender", "recipient", "recipientID", "senderID", "time", "text", "action"]
-            dataList = [str(sender), str(recipient), str(recipientID), str(senderID), str(time_of_reception), str(text), str(self.action)]
+            nameList = ["target", "time", "text", "action"]
+            dataList = [target, str(time_of_reception), text, self.action]
             self.client.AddToBuffer(nameList, dataList)
-            if self.testing: print(f"sender:     {sender}")
-            if self.testing: print(f"recipient:  {recipient}")
-            if self.testing: print(f"time:       {time_of_reception}")
-            if self.testing: print(f"text:       {text}")
-            if self.testing: print('_____________________________________________________________________________________________________________')
+            #self.client.SendMessage()
+            #if self.testing: print(f"sender:     {sender}")
+            #if self.testing: print(f"recipient:  {recipient}")
+            #if self.testing: print(f"time:       {time_of_reception}")
+            #if self.testing: print(f"text:       {text}")
+            #if self.testing: print('_____________________________________________________________________________________________________________')
+        if self.testing: print('finish query')
         self.initialQuery = True
+        if self.testing: print('befor send')
         self.client.SendMessage()
+        if self.testing: print('after send')
         self.callbackDone.set()
     
         
@@ -82,19 +93,25 @@ class Snapshot:
             if change.type.name == 'ADDED':
                 doc = change.document
                 #doc = change.after()
-                messages = doc.to_dict()
+                messages = doc
                 if self.testing: print('__________________________________________________\\\\_______________________________________________________')
                 if self.testing: print(f'messages: {messages}')
                 if self.testing: print('__________________________________________________\\\\\______________________________________________________')
-                sender = self.get_real_name(messages.get('from'))
-                recipientID = messages.get('to')
-                senderID = messages.get('from')
-                recipient = self.get_real_name(recipientID)
+                #sender = self.get_real_name(messages.get('from'))
+                #recipientID = messages.get('to')
+                #senderID = messages.get('from')
+                #recipient = self.get_real_name(recipientID)
                 #print(f'recipient: {recipient}')
+                target = ""
+                if(self.action == "Received"):
+                    target = messages.get('from')
+                elif(self.action == "Sent"):
+                    target = messages.get('to')
                 time_of_reception = self.formatTime(messages.get('time'))
                 text = messages.get('body')
-                nameList = ["sender", "recipient", "recipientID", "senderID", "time", "text", "action"]
-                dataList = [str(sender), str(recipient), str(recipientID), str(senderID), str(time_of_reception), str(text), str(self.action)]
+                nameList = ["target", "time", "text", "action"]
+                dataList = [target, str(time_of_reception), text, self.action]
                 self.client.AddToBuffer(nameList, dataList)
-        self.client.SendMessage()
+                self.client.SendMessage()
+        #self.client.SendMessage()
         self.callbackDone.set()
