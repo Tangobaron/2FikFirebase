@@ -8,6 +8,7 @@ from td_client import TDClient
 from twofik_localisation import Twofik
 from snapshot_class import Snapshot as Listener
 from inbox import Inbox
+from CadavreExquis import CadavreExquis
 import time
 import socket
 import sys
@@ -23,7 +24,8 @@ parser.add_argument('-p', '--ports', nargs=5, dest='ports', default=[5780,5784,5
 #parser.add_argument('-d', '--debug', type=int, dest='DEBUG', default=0, help='this variable range from 0 to 3. It determine the level of verbose you\'ll get from the python app. Higher the verbose lower the performance. Let to default for maximum performance')
 args = parser.parse_args()
 
-class serverVar():
+
+class ServerVar:
     # class containing constant we need through the application
     def __init__(self):
         self.testing = False
@@ -40,11 +42,13 @@ class serverVar():
         self.CLI_to = TDClient('localhost', int(args.ports[2]), DEBUG=False)
         self.CLI_rank = TDClient('localhost', int(args.ports[4]), DEBUG=False)
         #imported class instanciation
-        self.inbox = Inbox(db, self.CLI_inbox, DEBUG=False)
+        #self.inbox = Inbox(db, self.CLI_inbox, DEBUG=False)
+        self.lastMessage = CadavreExquis(db, self.CLI_inbox)
         self.twoFik = Twofik(cred,db,str(args.id), self.CLI_location, DEBUG=False)
         self.ranking = FillRanking(db, self.CLI_rank, 7, DEBUG=False)
-        self.FromListener = Listener(db, self.CLI_from, ACTION="Sent", callback=self.UpdateInbox, DEBUG=False)
-        self.toListener = Listener(db, self.CLI_to, ACTION="Received", callback=self.UpdateInbox, DEBUG=False)
+        # Uncomment those line if you implement inbox
+        self.FromListener = Listener(db, self.CLI_from, ACTION="Sent", DEBUG=False)#can receive a callback function
+        self.toListener = Listener(db, self.CLI_to, ACTION="Received", DEBUG=False)#can receive a callback function
         #callbackDone = threading.Event()
 
     def UpdateInbox(self):
@@ -58,7 +62,7 @@ class serverVar():
 def sLoop():
     global sVar
     if sVar is None:
-        sVar = serverVar()
+        sVar = ServerVar()
     if sVar.isAlive is False:
         print("Initialise server")
         # Creates a reference to the messages collection
@@ -69,7 +73,7 @@ def sLoop():
         sVar.lastName = sVar.twoFik.ChatWith
     if sVar.twoFikID != sVar.twoFik.Name:
         if sVar.testing is True: print("launch inbox update")
-        sVar.inbox.CalculateInbox(sVar.twoFik.Name)
+        #sVar.inbox.CalculateInbox(sVar.twoFik.Name)
         sVar.twoFikID = sVar.twoFik.Name
     #if sVar.isAlive is True:
         #sVar.responseServer.CheckConnection()
@@ -85,7 +89,8 @@ def init():
     # serverVar.doc_watch = fik_ref.on_snapshot(on_snapshot)
     # create twoFik status object and start listening on it<s in app location
     sVar.twoFik.Follow2fik()
-    #sVar.inbox.CalculateInbox(sVar.twoFik.Name)
+    # Uncomment those line if you implement inbox
+    ##sVar.inbox.CalculateInbox(sVar.twoFik.Name)
     return True
 
 def queryChat():
@@ -94,9 +99,9 @@ def queryChat():
     collection_ref = db.collection('messages')
     if sVar.testing: print(f'twofik id: {sVar.twoFik.Name}')
 
+
     fik_ref = collection_ref.where(u'from', u'==',  sVar.twoFik.Name).limit(sVar.queryLimit).where(u'to', u'==', sVar.twoFik.ChatWith)
     recipient_ref = collection_ref.where(u'to', u'==', sVar.twoFik.Name).limit(sVar.queryLimit).where(u'from', u'==',  sVar.twoFik.ChatWith)
-    
     sVar.FromListener.SetNewListener(fik_ref)
     sVar.toListener.SetNewListener(recipient_ref)
     

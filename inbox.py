@@ -10,6 +10,7 @@ class Inbox:
         self.persons = {}
         self.maxIndex = 20
         self.busy = False
+        self.batch = 0
 
     # fills inbox with latest messages
     def CalculateInbox(self, identification):
@@ -27,6 +28,7 @@ class Inbox:
                 user = msg.get('from')
                 lastMsg = msg.get('body')
                 timestamp = msg.get('time')
+
                 if self.testing is True: print(f'user: {user}, lastMsg: {lastMsg}, timestamp: {timestamp}')
                 self.addObject(self.persons, user, lastMsg, timestamp, "received")
         
@@ -34,12 +36,13 @@ class Inbox:
                 user = msg.get('to')
                 lastMsg = msg.get('body')
                 timestamp = msg.get('time')
+
                 if self.testing is True: print(f'user: {user}, lastMsg: {lastMsg}, timestamp: {timestamp}')
                 if user in self.persons:
                     if timestamp > self.persons[user][1]:
-                        self.addObject(self.persons,user, lastMsg, timestamp, "sent")
+                        self.addObject(self.persons, user, lastMsg, timestamp, "sent")
                 else:
-                    self.addObject(self.persons,user, lastMsg, timestamp, "sent")
+                    self.addObject(self.persons, user, lastMsg, timestamp, "sent")
             self.sendToServer(identification)
 
     def sendToServer(self, identification):
@@ -48,17 +51,19 @@ class Inbox:
             lastMsg = str(data[0])
             timeStamp = str(data[1])
             state = str(data[2])
-            label = ["2fikID", "id","name","lastMsg","timeStamp","state"]
-            value = [identification, name, self.get_real_name(name), lastMsg, timeStamp, state]
+            label = ["2fikID", "id", "name", "lastMsg", "timeStamp", "state", "batch"]
+            value = [identification, name, self.get_real_name(name), lastMsg, timeStamp, state, self.batch]
             self.server.AddToBuffer(label, value)
         self.server.SendMessage()
         self.busy = False
+        self.batch = self.batch + 1
 
     def get_real_name(self, uid):
         names_ref = self.db.collection(u'profiles').document(uid).get()
         return names_ref.get('name')
 
     # add passed user and their latest messages
-    def addObject(self, arr, user, lastMsg, timestamp, action):
+    @staticmethod
+    def addObject(arr, user, lastMsg, timestamp, action):
         obj = [lastMsg, timestamp, action]
         arr[user] = obj
