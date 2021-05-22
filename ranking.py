@@ -30,13 +30,14 @@ class Ranking:
             uid = rank.id
             hot_count = rank.get('hotCount')
             not_count = rank.get('notCount')
+            time_stamp = rank.get('time')
 
-            hot_dict = {'UID': uid, 'Name': name, 'Hot Count': hot_count}
+            hot_dict = {'UID': uid, 'Name': name, 'Hot Count': hot_count, 'Time': time_stamp}
             self.hot_leaderboard.append(hot_dict)
             self.hot_leaderboard.sort(key=lambda i: i['Hot Count'], reverse=True)
             self.hot_leaderboard = self.hot_leaderboard[:self.list_size]
 
-            not_dict = {'UID': uid, 'Name': name, 'Not Count': not_count}
+            not_dict = {'UID': uid, 'Name': name, 'Not Count': not_count, 'Time': time_stamp}
             self.not_leaderboard.append(not_dict)
             self.not_leaderboard.sort(key=lambda i: i['Not Count'], reverse=True)
             self.not_leaderboard = self.not_leaderboard[:self.list_size]
@@ -46,11 +47,11 @@ class Ranking:
 
     def composeMessage(self):
         for rank in self.not_leaderboard:
-            labels = ["ID", "name", "count","type"]
-            datas = [rank.get("UID"), rank.get("Name"), rank.get("Not Count"),"Not"]
+            labels = ["ID", "name", "count", "type"]
+            datas = [rank.get("UID"), rank.get("Name"), rank.get("Not Count"), "Not"]
             self.CLI.AddToBuffer(labels, datas)
         for rank in self.hot_leaderboard:
-            labels = ["ID", "name", "count","type"]
-            datas = [rank.get("UID"), rank.get("Name"), rank.get("Hot Count"),"Hot"]
+            labels = ["ID", "name", "count", "type"]
+            datas = [rank.get("UID"), rank.get("Name"), rank.get("Hot Count"), "Hot"]
             self.CLI.AddToBuffer(labels, datas)
         self.CLI.SendMessage()
