@@ -30,14 +30,13 @@ class Ranking:
             uid = rank.id
             hot_count = rank.get('hotCount')
             not_count = rank.get('notCount')
-            time_stamp = rank.get('time')
 
-            hot_dict = {'UID': uid, 'Name': name, 'Hot Count': hot_count, 'Time': time_stamp}
+            hot_dict = {'UID': uid, 'Name': name, 'Hot Count': hot_count}
             self.hot_leaderboard.append(hot_dict)
             self.hot_leaderboard.sort(key=lambda i: i['Hot Count'], reverse=True)
             self.hot_leaderboard = self.hot_leaderboard[:self.list_size]
 
-            not_dict = {'UID': uid, 'Name': name, 'Not Count': not_count, 'Time': time_stamp}
+            not_dict = {'UID': uid, 'Name': name, 'Not Count': not_count}
             self.not_leaderboard.append(not_dict)
             self.not_leaderboard.sort(key=lambda i: i['Not Count'], reverse=True)
             self.not_leaderboard = self.not_leaderboard[:self.list_size]

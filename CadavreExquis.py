@@ -18,8 +18,8 @@ class CadavreExquis:
         for doc in query_ref:
             sender = doc.get("from")
             msg = doc.get("body")
-            label = ["Sender", "Message"]
-            value = [self.get_real_name(sender), msg]
+            label = ["time", "Message"]
+            value = [doc.get("time"), msg]
             self.server.AddToBuffer(label, value)
         self.server.SendMessage()
         self.WatchUpdate()
@@ -33,10 +33,9 @@ class CadavreExquis:
         for change in changes:
             if change.type.name == 'ADDED':
                 doc = change.document
-                sender = doc.get("from")
                 msg = doc.get("body")
-                label = ["Sender", "Message"]
-                value = [self.get_real_name(sender), msg]
+                label = ["time", "Message"]
+                value = [doc.get("time"), msg]
                 self.server.AddToBuffer(label, value)
         self.server.SendMessage()
 
